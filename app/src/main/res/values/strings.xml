@@ -1,3 +1,8 @@
 <resources>
-    <string name="app_name">A2L7_SMS_Homework</string>
+    <string name="app_name" translatable="false">A2L7_SMS_Homework</string>
+    <string name="phoneNumber">Phone number</string>
+    <string name="message">Message text</string>
+    <string name="send">Send message</string>
+    <string name="inputMessage">Enter your message</string>
+    <string name="input">Enter phone number</string>
 </resources>

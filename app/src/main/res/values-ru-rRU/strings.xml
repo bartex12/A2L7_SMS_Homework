@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="phoneNumber">Номер телефона</string>
+    <string name="message">Текст сообщения</string>
+    <string name="send">Послать сообщение </string>
+    <string name="inputMessage">Введите текст сообщения</string>
+    <string name="input">Введите номер телефона</string>
+</resources>
