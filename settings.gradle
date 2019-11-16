@@ -1,2 +1,2 @@
-include ':app'
+include ':app', ':receiver'
 rootProject.name='A2L7_SMS_Homework'

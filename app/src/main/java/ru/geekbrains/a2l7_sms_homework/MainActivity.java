@@ -11,10 +11,10 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "33333";
@@ -31,18 +31,33 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        if (getIntent()!=null){
+            Intent intent = getIntent();
+            String message = intent.getStringExtra("message");
+            Log.d(TAG, "MainActivity getIntent message = " + message);
+        }
+
         initViews();
         initListAdapter();
-        sendMessage();
-        receiveSms();
+        sendSmsMessage();
+        receiveSmsMessage();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        IntentFilter intentFilter = new IntentFilter(
-                "ru.geekbrains.a2l7_sms_homework.action.SmsReceiver");
+        IntentFilter intentFilter = new IntentFilter("ru.geekbrains.action.TestedReceiver");
         registerReceiver(broadcastReceiver, intentFilter);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
     }
 
     private void initViews() {
@@ -59,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
         recyclerViewVidget.setAdapter(recyclerViewAdapter);
     }
 
-    private void sendMessage() {
+    private void sendSmsMessage() {
         btnSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -74,19 +89,16 @@ public class MainActivity extends AppCompatActivity {
                     sendSmsIntent(phoneNumber, smsText);
                     //посылаем широковещательное сообщение с текстом sms
                     sendBroadcastIntent(smsText);
-
                     etMessage.setText("");
-                    //TODO добавление в список сделать через получение широковещательного сообщения
-                    // и скорее всего , в другом приложении- чате
                 }
             }
 
             private void sendBroadcastIntent(String smsText) {
                 // Отправляем бродкаст
-                Intent intentBroadcast = new Intent("ru.geekbrains.a2l7_sms_homework.action.SmsReceiver");
-                intentBroadcast.putExtra("sms", smsText);
-                intentBroadcast.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
-                sendBroadcast(intentBroadcast);
+                Intent intent = new Intent("ru.geekbrains.action.TestReceiver");
+                intent.putExtra("hello", smsText);
+                intent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
+                sendBroadcast(intent);
                 Log.d(TAG, "MainActivity sendBroadcastIntent smsText = " + smsText );
             }
 
@@ -94,6 +106,7 @@ public class MainActivity extends AppCompatActivity {
                 //посылаем сообщение sms
                 Log.d(TAG, "MainActivity sendMessage smsText = "
                         + smsText +" phoneNumber = " + phoneNumber);
+
                 String toNumberSms="smsto:" + phoneNumber;
                 Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.parse(toNumberSms));
                 intent.putExtra("sms_body", smsText);
@@ -109,11 +122,11 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void receiveSms() {
+    private void receiveSmsMessage() {
         broadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                String answer = intent.getStringExtra("sms");
+                String answer = intent.getStringExtra("hello");
                 Log.d(TAG, "MainActivity receiveSms answer = " + answer );
                 recyclerViewAdapter.addItem(answer);
             }
