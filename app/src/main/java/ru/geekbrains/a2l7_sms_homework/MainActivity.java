@@ -1,17 +1,25 @@
 package ru.geekbrains.a2l7_sms_homework;
 
+import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.telephony.SmsManager;
+import android.telephony.SmsMessage;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -25,24 +33,54 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerViewChatAdapter recyclerViewAdapter = null;
 
     private BroadcastReceiver broadcastReceiver;
+    private final int permissionRequestCode = 123;
+    int messageId = 0;
+    private static final String ACTION = "android.provider.Telephony.SMS_RECEIVED";
+    static final String NOTIFICATION_CHANNEL_ID = "10001";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS)
+                        != PackageManager.PERMISSION_GRANTED) {
+            final String[] permissions = new String[]{Manifest.permission.RECEIVE_SMS};
+            ActivityCompat.requestPermissions(this, permissions, permissionRequestCode);
+        }
+
         initViews();
         initListAdapter();
         sendMessage();
-        receiveSms();
+        setupBroadcastReceiver();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        if (requestCode == permissionRequestCode) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(getApplicationContext(), "Спасибо!", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(getApplicationContext(),
+                        "Извините, апп без данного разрешения может работать неправильно",
+                        Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        IntentFilter intentFilter = new IntentFilter(
-                "ru.geekbrains.a2l7_sms_homework.action.SmsReceiver");
+        IntentFilter intentFilter = new IntentFilter(ACTION);
         registerReceiver(broadcastReceiver, intentFilter);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(broadcastReceiver);
     }
 
     private void initViews() {
@@ -72,22 +110,9 @@ public class MainActivity extends AppCompatActivity {
                 }  else{
                     //посылаем интент для отправки sms
                     sendSmsIntent(phoneNumber, smsText);
-                    //посылаем широковещательное сообщение с текстом sms
-                    sendBroadcastIntent(smsText);
 
                     etMessage.setText("");
-                    //TODO добавление в список сделать через получение широковещательного сообщения
-                    // и скорее всего , в другом приложении- чате
                 }
-            }
-
-            private void sendBroadcastIntent(String smsText) {
-                // Отправляем бродкаст
-                Intent intentBroadcast = new Intent("ru.geekbrains.a2l7_sms_homework.action.SmsReceiver");
-                intentBroadcast.putExtra("sms", smsText);
-                intentBroadcast.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
-                sendBroadcast(intentBroadcast);
-                Log.d(TAG, "MainActivity sendBroadcastIntent smsText = " + smsText );
             }
 
             private void sendSmsIntent(String phoneNumber, String smsText) {
@@ -95,10 +120,14 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG, "MainActivity sendMessage smsText = "
                         + smsText +" phoneNumber = " + phoneNumber);
                 String toNumberSms="smsto:" + phoneNumber;
-                Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.parse(toNumberSms));
-                intent.putExtra("sms_body", smsText);
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
+
+//                Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.parse(toNumberSms));
+//                intent.putExtra("sms_body", smsText);
+//                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//                startActivity(intent);
+
+                SmsManager smsManager = SmsManager.getDefault();
+                smsManager.sendTextMessage(toNumberSms, null, smsText, null, null);
             }
 
             private void showToast(int p) {
@@ -109,16 +138,40 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void receiveSms() {
+    private void setupBroadcastReceiver() {
         broadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                String answer = intent.getStringExtra("sms");
-                Log.d(TAG, "MainActivity receiveSms answer = " + answer );
-                recyclerViewAdapter.addItem(answer);
+                // Минимальные проверки
+                if (intent != null && intent.getAction() != null &&
+                        ACTION.compareToIgnoreCase(intent.getAction()) == 0) {
+                    Log.d(TAG, "MainActivity setupBroadcastReceiver");
+                    // Получаем сообщения
+                    Object[] pdus = (Object[]) intent.getExtras().get("pdus");
+                    SmsMessage[] messages = new SmsMessage[pdus.length];
+                    for (int i = 0; i < pdus.length; i++) {
+                        messages[i] = SmsMessage.createFromPdu((byte[]) pdus[i]);
+                    }
+                    String smsFromPhoneNumber = messages[0].getDisplayOriginatingAddress();
+                    StringBuilder body = new StringBuilder();
+                    for (SmsMessage message : messages) {
+                        body.append(message.getMessageBody());
+                    }
+                    final String bodyText = body.toString();
+                    Log.d(TAG, "MainActivity setupBroadcastReceiver bodyText " +bodyText );
+                    //makeNote(context, smsFromPhone, bodyText);
+
+                    Toast.makeText(getApplicationContext(),smsFromPhoneNumber +
+                            " -> " + bodyText,
+                            Toast.LENGTH_LONG).show();
+
+                    recyclerViewAdapter.addItem(bodyText);
+
+                }
             }
         };
     }
+
 }
 
 
