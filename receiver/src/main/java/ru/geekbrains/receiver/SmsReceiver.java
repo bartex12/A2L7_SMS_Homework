@@ -1,4 +1,4 @@
-package ru.geekbrains.a2l7_sms_homework;
+package ru.geekbrains.receiver;
 
 import android.annotation.SuppressLint;
 import android.app.NotificationChannel;
@@ -13,7 +13,9 @@ import android.os.Build;
 import android.provider.Settings;
 import android.telephony.SmsMessage;
 import android.util.Log;
+
 import androidx.core.app.NotificationCompat;
+
 import static android.content.Context.NOTIFICATION_SERVICE;
 
 public class SmsReceiver extends BroadcastReceiver {
