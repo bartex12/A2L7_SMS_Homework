@@ -44,7 +44,7 @@ public class SmsReceiver extends BroadcastReceiver {
                 body.append(message.getMessageBody());
             }
             String bodyText = body.toString();
-            Toast.makeText(context, "sms = " + bodyText, Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, "New sms = " + bodyText, Toast.LENGTH_SHORT).show();
 
             // Вывод уведомления в строке состояния
             makeNote(context, smsFromPhone, bodyText);
