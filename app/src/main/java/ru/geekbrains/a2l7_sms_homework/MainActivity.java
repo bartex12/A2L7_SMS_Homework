@@ -62,6 +62,7 @@ public class MainActivity extends AppCompatActivity {
                 String toNumberSms="smsto:" + phoneNumber;
                 Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.parse(toNumberSms));
                 intent.putExtra("sms_body", smsText);
+                intent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(intent);
             }

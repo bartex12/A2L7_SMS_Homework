@@ -46,14 +46,6 @@
             android:layout_marginEnd="12dp"
             android:text="@string/send" />
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/chatList"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginStart="12dp"
-            android:layout_marginTop="12dp"
-            android:layout_marginEnd="12dp"/>
-
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

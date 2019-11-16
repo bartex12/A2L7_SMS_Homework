@@ -13,6 +13,7 @@ import android.os.Build;
 import android.provider.Settings;
 import android.telephony.SmsMessage;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
 
@@ -43,11 +44,7 @@ public class SmsReceiver extends BroadcastReceiver {
                 body.append(message.getMessageBody());
             }
             String bodyText = body.toString();
-
-            Intent i = new Intent(context, MainActivity.class);
-            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            i.putExtra("message", bodyText);
-            context.startActivity(i);
+            Toast.makeText(context, "sms = " + bodyText, Toast.LENGTH_SHORT).show();
 
             // Вывод уведомления в строке состояния
             makeNote(context, smsFromPhone, bodyText);
