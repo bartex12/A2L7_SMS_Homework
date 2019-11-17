@@ -101,7 +101,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         unregisterReceiver(broadcastReceiver);
-
         saveLastChat();
     }
 
@@ -149,24 +148,24 @@ public class MainActivity extends AppCompatActivity {
                 }else if((phoneNumber.trim().isEmpty())){
                     showToast(R.string.input);
                 }  else{
-
                     //посылаем интент для отправки sms
                     sendSmsIntent(phoneNumber, smsText);
-
+                    //стираем строку
                     etMessage.setText("");
                 }
             }
 
+            //посылаем  sms через SmsManager - без вызова программы отправки sms
             private void sendSmsIntent(String phoneNumber, String smsText) {
-                //посылаем сообщение sms
                 Log.d(TAG, "MainActivity sendMessage smsText = "
                         + smsText +" phoneNumber = " + phoneNumber);
-                String toNumberSms="smsto:" + phoneNumber;
 
+                String toNumberSms="smsto:" + phoneNumber;
                 SmsManager smsManager = SmsManager.getDefault();
                 smsManager.sendTextMessage(toNumberSms, null, smsText, null, null);
             }
 
+            //показать Toast
             private void showToast(int p) {
                 Toast.makeText(MainActivity.this,
                         getResources().getString(p),
@@ -175,6 +174,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    //перехват sms приложением, вывод уведомлений в шторке и запись в список на экране
     private void setupBroadcastReceiver() {
         broadcastReceiver = new BroadcastReceiver() {
             @Override
@@ -209,7 +209,7 @@ public class MainActivity extends AppCompatActivity {
         };
     }
 
-    // Вывод уведомления в строке состояния
+    // Вывод уведомления
     private void makeNote(Context context, String addressFrom, String message) {
         if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             showOldNotifications(context, addressFrom, message);
