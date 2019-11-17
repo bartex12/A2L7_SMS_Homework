@@ -17,9 +17,17 @@ public class RecyclerViewChatAdapter extends RecyclerView.Adapter<RecyclerViewCh
     private static final String TAG = "33333";
     private ArrayList<String> data;
 
-    RecyclerViewChatAdapter(){
+    RecyclerViewChatAdapter(ArrayList<String> data){
         Log.d(TAG, "RecyclerViewChatAdapter RecyclerViewChatAdapter");
-        data = new ArrayList<>();
+        if (data != null) {
+            this.data = data;
+        }else{
+            this.data = new ArrayList<>();
+        }
+    }
+
+    ArrayList<String> getList(){
+        return data;
     }
 
     void addItem(String message) {

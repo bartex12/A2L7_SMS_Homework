@@ -10,10 +10,12 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.telephony.SmsManager;
 import android.telephony.SmsMessage;
@@ -23,7 +25,10 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -46,25 +51,31 @@ public class MainActivity extends AppCompatActivity {
     int messageId = 0;
     private static final String ACTION = "android.provider.Telephony.SMS_RECEIVED";
     static final String NOTIFICATION_CHANNEL_ID = "10001";
+    private static final String LAST_CHAT = "LAST_CHAT";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-                ActivityCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS)
-                        != PackageManager.PERMISSION_GRANTED) {
-            final String[] permissions = new String[]{Manifest.permission.RECEIVE_SMS};
-            ActivityCompat.requestPermissions(this, permissions, permissionRequestCode);
-        }
-
+        getPermission();
         initViews();
         initListAdapter();
         sendMessage();
         setupBroadcastReceiver();
     }
 
+    //запрашиваем разрешение на приём sms
+    private void getPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS)
+                        != PackageManager.PERMISSION_GRANTED) {
+            final String[] permissions = new String[]{Manifest.permission.RECEIVE_SMS};
+            ActivityCompat.requestPermissions(this, permissions, permissionRequestCode);
+        }
+    }
+
+    //результат реакции пользователя на запрос разрешения на приём sms
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
@@ -90,6 +101,20 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         unregisterReceiver(broadcastReceiver);
+
+        saveLastChat();
+    }
+
+    //сохраняем список строк чата в SharedPreferences
+    private void saveLastChat() {
+        Log.d(TAG,"MainActivity saveLastChat");
+        SharedPreferences preferences =
+                PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor editor = preferences.edit();
+        Set<String> set = new TreeSet<>(recyclerViewAdapter.getList());
+        editor.putStringSet(LAST_CHAT, set);
+        Log.d(TAG,"MainActivity saveLastChat set.size() = " + set.size());
+        editor.apply();
     }
 
     private void initViews() {
@@ -100,7 +125,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initListAdapter() {
-        recyclerViewAdapter = new RecyclerViewChatAdapter();
+        // в Preferences лежит  TreeSet<String>
+        TreeSet<String> tsDefault = new TreeSet<>();
+        Set<String> ts = PreferenceManager.getDefaultSharedPreferences(this)
+                .getStringSet(LAST_CHAT, tsDefault);
+        ArrayList<String>chat = new ArrayList<>(ts);
+
+        //инициализируем адаптер списком из Preferences
+        recyclerViewAdapter = new RecyclerViewChatAdapter(chat);
         LinearLayoutManager manager = new LinearLayoutManager(this);
         recyclerViewVidget.setLayoutManager(manager);
         recyclerViewVidget.setAdapter(recyclerViewAdapter);
